@@ -685,6 +685,17 @@ print(output_text)
 ### Hugginface inference with CPU
 Please refer to [CPU inference](https://github.com/rednote-hilab/dots.ocr/issues/1#issuecomment-3148962536)
 
+## 2.6 GPU Docker image with OpenAI-compatible API
+This repository includes a GitHub Actions workflow at `.github/workflows/docker-build.yml` to build a GPU Docker image from `docker/Dockerfile` and push it to GHCR and Docker Hub.
+
+- GHCR image: `ghcr.io/<owner>/dots-ocr:latest`
+- Docker Hub image: `docker.io/<DOCKERHUB_USERNAME>/dots-ocr:latest`
+- Exposes port `8000` and starts `vllm serve` with OpenAI-compatible `/v1` chat completions.
+- Mount your model weights into `/workspace/weights/DotsOCR` or set the `MODEL_PATH` environment variable.
+
+Before running the workflow, add these repository secrets:
+- `DOCKERHUB_USERNAME`
+- `DOCKERHUB_TOKEN`
 
 ## 3. Document Parse
 **Based on vLLM server**, you can parse an image or a pdf file using the following commands:

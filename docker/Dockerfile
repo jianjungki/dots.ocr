@@ -1,6 +1,41 @@
-# Dots OCR has been officially integrated into vLLM since v0.11.0
-# Below is the dockerfile for out-of-tree model registration support based on v0.9.1
-from vllm/vllm-openai:v0.9.1
+FROM vllm/vllm-openai:latest
 
-RUN pip3 install flash_attn==2.8.0.post2
-RUN pip3 install transformers==4.51.3
+WORKDIR /workspace
+
+COPY requirements.txt setup.py /workspace/
+COPY dots_ocr /workspace/dots_ocr
+COPY demo /workspace/demo
+COPY assets /workspace/assets
+COPY tools /workspace/tools
+COPY LICENSE README.md /workspace/
+
+RUN pip install --upgrade pip setuptools wheel \
+    && pip install -r requirements.txt \
+    && pip install -e .
+
+RUN python - <<'PY'
+from pathlib import Path
+entry = Path('/usr/local/bin/vllm')
+if not entry.exists():
+    entry = Path('/usr/bin/vllm')
+if entry.exists():
+    text = entry.read_text()
+    marker = 'from vllm.entrypoints.cli.main import main'
+    if marker in text and 'from DotsOCR import modeling_dots_ocr_vllm' not in text:
+        text = text.replace(marker,
+            marker + '\ntry:\n    from DotsOCR import modeling_dots_ocr_vllm\nexcept Exception:\n    pass')
+        entry.write_text(text)
+PY
+
+ENV PYTHONPATH=/workspace:$PYTHONPATH
+ENV MODEL_PATH=/workspace/weights/DotsOCR
+ENV TENSOR_PARALLEL_SIZE=1
+ENV GPU_MEMORY_UTILIZATION=0.8
+ENV SERVED_MODEL_NAME=dotsocr-model
+ENV PORT=8000
+
+EXPOSE 8000
+COPY docker/entrypoint.sh /workspace/entrypoint.sh
+RUN chmod +x /workspace/entrypoint.sh
+
+ENTRYPOINT ["/workspace/entrypoint.sh"]
