@@ -9,11 +9,11 @@ COPY assets /workspace/assets
 COPY tools /workspace/tools
 COPY LICENSE README.md /workspace/
 
-RUN pip install --upgrade pip setuptools wheel \
-    && pip install -r requirements.txt \
-    && pip install -e .
+RUN python3 -m pip install --upgrade pip setuptools wheel \
+    && python3 -m pip install -r requirements.txt \
+    && python3 -m pip install -e .
 
-RUN python - <<'PY'
+RUN python3 - <<'PY'
 from pathlib import Path
 entry = Path('/usr/local/bin/vllm')
 if not entry.exists():
@@ -27,7 +27,7 @@ if entry.exists():
         entry.write_text(text)
 PY
 
-ENV PYTHONPATH=/workspace:$PYTHONPATH
+ENV PYTHONPATH=/workspace
 ENV MODEL_PATH=/workspace/weights/DotsOCR
 ENV TENSOR_PARALLEL_SIZE=1
 ENV GPU_MEMORY_UTILIZATION=0.8
